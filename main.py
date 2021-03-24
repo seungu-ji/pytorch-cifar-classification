@@ -5,7 +5,6 @@ import time
 
 import torch
 import torch.nn as nn
-import torch.optim as optim
 from torch.utils.data import DataLoader
 
 import torchvision
@@ -13,6 +12,7 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 
 from util import *
+from cifar_models import *
 
 
 ## Parser setting
@@ -35,6 +35,8 @@ parser.add_argument('--network', default='VGGNet', type=str, dest='network')
 
 parser.add_argument('--mode', default='train', type=str, dest='mode')
 parser.add_argument('--train_continue', default='off', type=str, dest='train_continue')
+
+parser.add_argument('--vgg_type', default='A', type=str, dest='vgg_type')
 
 args = parser.parse_args()
 
@@ -64,18 +66,17 @@ def main():
         train_dataset = dataloader(root=args.data_dir, train=True, download=True, transform=transform_train)
         train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 
-        if args.network.startswith('ResNet'):
-            pass
-            """net = model.__dict__[args.network](
-                ############
-            )"""
+        if args.network.startswith('VGGNet'):
+            net = VGGNet(vgg_type=args.vgg_type)  
 
         net = torch.nn.DataParallel(net).to(device)
         print('----------------Total Parameters: %.2fM----------------' % (sum(p.numel() for p in net.parameters()) / 1000000.0))
 
         fn_loss = nn.CrossEntropyLoss()
 
-        optim = optim.SGD(net.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
+        optim = torch.optim.SGD(net.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
+
+        st_epoch = 0
 
         if args.train_continue == 'on':
             net, optim, st_epoch = load(ckpt_dir=args.ckpt_dir, net=net, optim=optim)
@@ -104,8 +105,8 @@ def main():
         test_dataset = dataloader(root=args.data_dir, train=False, transform=transform_test)
         test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
 
-        if args.network.startswith('ResNet'):
-            pass
+        if args.network.startswith('VGGNet'):
+            net = VGGNet(vgg_type=args.vgg_type)            
 
         net = torch.nn.DataParallel(net).to(device)
         print('----------------Total Parameters: %.2fM----------------' % (sum(p.numel() for p in net.parameters()) / 1000000.0))

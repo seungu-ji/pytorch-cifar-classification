@@ -4,6 +4,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+
+__all__ = ['Average', 'accuracy']
+
 ## Network save
 def save(ckpt_dir, net, optim, epoch):
     if not os.path.exists(ckpt_dir):
