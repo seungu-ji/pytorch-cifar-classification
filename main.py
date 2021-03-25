@@ -56,6 +56,7 @@ def main():
             transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
+        
         if args.cifar_type == 10:
             dataloader = datasets.CIFAR10
             num_classes = 10
@@ -67,7 +68,7 @@ def main():
         train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 
         if args.network.startswith('VGGNet'):
-            net = VGGNet(vgg_type=args.vgg_type)  
+            net = VGGNet(vgg_type=args.vgg_type, num_classes=num_classes)  
 
         net = torch.nn.DataParallel(net).to(device)
         print('----------------Total Parameters: %.2fM----------------' % (sum(p.numel() for p in net.parameters()) / 1000000.0))
@@ -106,7 +107,7 @@ def main():
         test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
 
         if args.network.startswith('VGGNet'):
-            net = VGGNet(vgg_type=args.vgg_type)            
+            net = VGGNet(vgg_type=args.vgg_type, num_classes=num_classes)            
 
         net = torch.nn.DataParallel(net).to(device)
         print('----------------Total Parameters: %.2fM----------------' % (sum(p.numel() for p in net.parameters()) / 1000000.0))
@@ -132,13 +133,18 @@ def one_epoch_train(train_loader, net, fn_loss, optim, epoch):
 
     batch_time = Average()
     data_time = Average()
-    loss_arr = Average()
-    top1 = Average()
-    top5 = Average()
+    #loss_arr = Average()
+    #top1 = Average()
+    #top5 = Average()
 
     end = time.time()
 
+    correct = 0
+    loss_arr = 0
+
     for batch, (inputs, labels) in enumerate(train_loader, 1):
+        # print('state" %04d' % batch)
+
         data_time.update(time.time() - end)
 
         inputs = torch.autograd.Variable(inputs.to(device))
@@ -147,10 +153,14 @@ def one_epoch_train(train_loader, net, fn_loss, optim, epoch):
         outputs = net(inputs)
         loss = fn_loss(outputs, labels)
 
-        pred1, pred5 = accuracy(outputs.data, labels.data, topk=(1, 5))
-        loss_arr.update(loss.data[0], inputs.size(0))
-        top1.update(pred1[0], inputs.size(0))
-        top5.update(pred5[0], inputs.size(0))
+        #pred1, pred5 = accuracy(outputs.data, labels.data, topk=(1, 5))
+        #loss_arr.update(loss.data[0], inputs.size(0))
+        #top1.update(pred1[0], inputs.size(0))
+        #top5.update(pred5[0], inputs.size(0))
+        loss_arr += loss.item()
+
+        _, predict = outputs.max(1)
+        correct += predict.eq(labels).sum().item() 
 
         optim.zero_grad()
         loss.backward()
@@ -159,8 +169,11 @@ def one_epoch_train(train_loader, net, fn_loss, optim, epoch):
         batch_time.update(time.time() - end)
         end = time.time()
 
-    return (loss_arr.avg, top1.avg)
+    acc = correct / batch
+    loss = loss_arr / batch
 
+    #return (loss_arr.avg, top1.avg)
+    return loss, acc
 
 def one_epoch_test(test_loader, net, fn_loss, epoch):
     global best_acc
@@ -169,11 +182,14 @@ def one_epoch_test(test_loader, net, fn_loss, epoch):
 
     batch_time = Average()
     data_time = Average()
-    loss_arr = Average()
-    top1 = Average()
-    top5 = Average
+    #loss_arr = Average()
+    #top1 = Average()
+    #top5 = Average
     
     end = time.time()
+
+    correct = 0
+    loss_arr = 0
 
     for batch, (inputs, labels) in enumerate(test_loader, 1):
         data_time.update(time.time() - end)
@@ -184,15 +200,23 @@ def one_epoch_test(test_loader, net, fn_loss, epoch):
         outputs = net(inputs)
         loss = fn_loss(outputs, labels)
 
-        pred1, pred5 = accuracy(outputs.data, labels.data, topk=(1, 5))
-        loss_arr.update(loss.data[0], inputs.size(0))
-        top1.update(pred1[0], inputs.size(0))
-        top5.update(pred5[0], inputs.size(0))
+        #pred1, pred5 = accuracy(outputs.data, labels.data, topk=(1, 5))
+        #loss_arr.update(loss.data[0], inputs.size(0))
+        #top1.update(pred1[0], inputs.size(0))
+        #top5.update(pred5[0], inputs.size(0))
+        loss_arr += loss.item()
+
+        _, predict = outputs.max(1)
+        correct += predict.eq(labels).sum().item() 
 
         batch_time.update(time.time() - end)
         end = time.time()
+    
+    acc = correct / batch
+    loss = loss_arr / batch
 
-    return (loss_arr.avg, top1.avg)
+    #return (loss_arr.avg, top1.avg)
+    return loss, acc
 
 
 

@@ -4,8 +4,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-
-__all__ = ['Average', 'accuracy']
+# __all__ = ['Average', 'accuracy']
+__all__ = ['Average']
 
 ## Network save
 def save(ckpt_dir, net, optim, epoch):
@@ -32,6 +32,7 @@ def load(ckpt_dir, net, optim):
 
     return net, optim, epoch
 
+
 ## Compute Average
 class Average(object):
     def __init__(self):
@@ -49,6 +50,7 @@ class Average(object):
         self.count += n
         self.avg = self.sum / self.count
 
+"""
 ## Compute accuracy
 def accuracy(output, label, topk=(1,)):
     max_topk = max(topk)
@@ -64,3 +66,4 @@ def accuracy(output, label, topk=(1,)):
         res.append(correct_k.mul_(100.0 / batch_size))
 
     return res
+"""

@@ -21,11 +21,11 @@ cfg = {
 }
 
 class VGGNet(nn.Module):
-    def __init__(self, vgg_type):
+    def __init__(self, vgg_type, num_classes):
         super(VGGNet, self).__init__()
         
         self.layers = self.make_layers(cfg[vgg_type])
-        self.classifier = nn.Linear(512, 10)
+        self.classifier = nn.Linear(512, num_classes)
 
     def forward(self, x):
         x = self.layers(x)
@@ -53,19 +53,19 @@ class VGGNet(nn.Module):
         return nn.Sequential(*layers)
 
 def vgg11(**kwargs):
-    net = VGGNet(vgg_type='A')
+    net = VGGNet(vgg_type='A', num_classes=10)
     return net
 
 def vgg13(**kwargs):
-    net = VGGNet(vgg_type='B')
+    net = VGGNet(vgg_type='B', num_classes=10)
     return net
 
 def vgg16(**kwargs):
-    net = VGGNet(vgg_type='C')
+    net = VGGNet(vgg_type='C', num_classes=10)
     return net
 
 def vgg19(**kwargs):
-    net = VGGNet(vgg_type='E')
+    net = VGGNet(vgg_type='E', num_classes=10)
     return net
 
 
