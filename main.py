@@ -139,8 +139,9 @@ def one_epoch_train(train_loader, net, fn_loss, optim, epoch):
 
     end = time.time()
 
-    correct = 0
     loss_arr = 0
+    total = 0
+    correct = 0
 
     for batch, (inputs, labels) in enumerate(train_loader, 1):
         # print('state" %04d' % batch)
@@ -160,6 +161,7 @@ def one_epoch_train(train_loader, net, fn_loss, optim, epoch):
         loss_arr += loss.item()
 
         _, predict = outputs.max(1)
+        total += labels.size(0)
         correct += predict.eq(labels).sum().item() 
 
         optim.zero_grad()
@@ -169,7 +171,7 @@ def one_epoch_train(train_loader, net, fn_loss, optim, epoch):
         batch_time.update(time.time() - end)
         end = time.time()
 
-    acc = correct / batch
+    acc = 100.0 * correct / total
     loss = loss_arr / batch
 
     #return (loss_arr.avg, top1.avg)
@@ -187,9 +189,10 @@ def one_epoch_test(test_loader, net, fn_loss, epoch):
     #top5 = Average
     
     end = time.time()
-
-    correct = 0
+    
     loss_arr = 0
+    total = 0
+    correct = 0
 
     for batch, (inputs, labels) in enumerate(test_loader, 1):
         data_time.update(time.time() - end)
@@ -207,12 +210,13 @@ def one_epoch_test(test_loader, net, fn_loss, epoch):
         loss_arr += loss.item()
 
         _, predict = outputs.max(1)
+        total += labels.size(0)
         correct += predict.eq(labels).sum().item() 
 
         batch_time.update(time.time() - end)
         end = time.time()
     
-    acc = correct / batch
+    acc = 100.0 * correct / total
     loss = loss_arr / batch
 
     #return (loss_arr.avg, top1.avg)
