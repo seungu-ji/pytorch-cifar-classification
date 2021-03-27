@@ -31,12 +31,15 @@ parser.add_argument('--data_dir', default='./data', type=str, dest='data_dir')
 parser.add_argument('--ckpt_dir', default='./checkpoint', type=str, dest='ckpt_dir')
 
 parser.add_argument('--cifar_type', default=10, type=int, dest='cifar_type')
+# VGGNet, ResNet
 parser.add_argument('--network', default='VGGNet', type=str, dest='network')
 
 parser.add_argument('--mode', default='train', type=str, dest='mode')
 parser.add_argument('--train_continue', default='off', type=str, dest='train_continue')
 
 parser.add_argument('--vgg_type', default='A', type=str, dest='vgg_type')
+parser.add_argument('--resnet_type', default=18, type=int, dest='resnet_type')
+
 
 args = parser.parse_args()
 
@@ -46,7 +49,7 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 def main():
     global best_acc
     
-    print('----------------Preparing CIFAR dataset----------------')
+    print('--------------------------------Preparing CIFAR dataset--------------------------------')
     
     ## TRAIN MODE
     if args.mode == 'train':
@@ -68,10 +71,13 @@ def main():
         train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 
         if args.network.startswith('VGGNet'):
-            net = VGGNet(vgg_type=args.vgg_type, num_classes=num_classes)  
+            net = VGGNet(vgg_type=args.vgg_type, num_classes=num_classes)
+        elif args.network.startswith('ResNet'):
+            net = ResNet18(num_classes=num_classes)
 
         net = torch.nn.DataParallel(net).to(device)
-        print('----------------Total Parameters: %.2fM----------------' % (sum(p.numel() for p in net.parameters()) / 1000000.0))
+        print('--------------------------------Total Parameters: %.2fM--------------------------------' 
+                % (sum(p.numel() for p in net.parameters()) / 1000000.0))
 
         fn_loss = nn.CrossEntropyLoss()
 
@@ -107,7 +113,9 @@ def main():
         test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
 
         if args.network.startswith('VGGNet'):
-            net = VGGNet(vgg_type=args.vgg_type, num_classes=num_classes)            
+            net = VGGNet(vgg_type=args.vgg_type, num_classes=num_classes)
+        elif args.network.startswith('ResNet'):
+            net = ResNet18(num_classes=num_classes)
 
         net = torch.nn.DataParallel(net).to(device)
         print('----------------Total Parameters: %.2fM----------------' % (sum(p.numel() for p in net.parameters()) / 1000000.0))
